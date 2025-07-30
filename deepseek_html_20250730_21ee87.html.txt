@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras Aleatoria</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            padding: 20px;
+            max-width: 100%;
+            overflow-x: hidden;
+            background-color: #f0f8ff;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 8px 15px;
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .back-button:hover {
+            background-color: #5f9ea0;
+        }
+        
+        .game-container {
+            max-width: 800px;
+            margin: 50px auto 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2e8b57;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background-color: #e6f7ff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .score {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2e8b57;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            padding: 8px 15px;
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .control-button:hover {
+            background-color: #5f9ea0;
+        }
+        
+        .words-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+            background-color: #f5fffa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .word-list {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        
+        .word-item {
+            list-style: none;
+            margin: 8px;
+            padding: 8px 12px;
+            background-color: #e6f7ff;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .word-item.found {
+            text-decoration: line-through;
+            color: #2e8b57;
+            background-color: #e1f7e1;
+        }
+        
+        .grid-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 2px;
+            margin: 0 auto;
+            justify-content: center;
+            background-color: #ddd;
+            border: 2px solid #bbb;
+            padding: 2px;
+        }
+        
+        .cell {
+            width: 100%;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            font-size: min(4vw, 22px);
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        
+        .cell.selected {
+            background-color: #b0e0e6;
+        }
+        
+        .cell.found {
+            background-color: #98fb98;
+            color: #006400;
+        }
+        
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2e8b57;
+            min-height: 27px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0fff0;
+        }
+        
+        @media (max-width: 600px) {
+            .cell {
+                font-size: 16px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .word-item {
+                margin: 5px;
+                padding: 5px 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='go:home'">Volver Arriba</button>
+    
+    <div class="game-container">
+        <h1>Sopa de Letras Aleatoria</h1>
+        
+        <div class="controls">
+            <button class="control-button" id="new-game">Nuevo Juego</button>
+            <button class="control-button" id="hint">Pista (10 pts)</button>
+        </div>
+        
+        <div class="game-info">
+            <div class="score">Puntos: <span id="score">0</span></div>
+            <div>Palabras: <span id="found-count">0</span>/<span id="total-words">0</span></div>
+            <div>Dificultad: <span id="difficulty">Media</span></div>
+        </div>
+        
+        <div class="words-container">
+            <ul id="word-list" class="word-list"></ul>
+        </div>
+        
+        <div class="grid-container">
+            <div id="grid" class="grid"></div>
+        </div>
+        
+        <div id="message" class="message"></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Banco de palabras en español (20 categorías con 15 palabras cada una)
+            const spanishWords = {
+                animales: ["ELEFANTE", "JIRAFA", "TIGRE", "LEON", "CANGURO", 
+                         "DELFIN", "TORTUGA", "PAJARO", "SERPIENTE", "RINOCERONTE",
+                         "HIPOPOTAMO", "CEBRA", "COCODRILO", "JAGUAR", "LORO"],
+                frutas: ["MANZANA", "PLATANO", "NARANJA", "FRESA", "SANDIA",
+                        "UVA", "MANGO", "PINA", "KIWI", "MELON",
+                        "CEREZA", "PERA", "LIMON", "PAPAYA", "COCO"],
+                paises: ["ESPAÑA", "MEXICO", "ARGENTINA", "COLOMBIA", "PERU",
+                        "CHILE", "VENEZUELA", "ECUADOR", "BRASIL", "CUBA",
+                        "ITALIA", "FRANCIA", "ALEMANIA", "JAPON", "CANADA"],
+                profesiones: ["MEDICO", "MAESTRO", "INGENIERO", "ABOGADO", "ARQUITECTO",
+                            "BOMBERO", "POLICIA", "PROGRAMADOR", "ENFERMERO", "CHEF",
+                            "PERIODISTA", "ARTISTA", "MUSICO", "ACTOR", "CIENTIFICO"],
+                deportes: ["FUTBOL", "BALONCESTO", "TENIS", "NATACION", "CICLISMO",
+                          "VOLEIBOL", "BEISBOL", "ATLETISMO", "BOXEO", "JUDO",
+                          "GOLF", "RUGBY", "HOCKEY", "PATINAJE", "AJEDREZ"],
+                colores: ["ROJO", "AZUL", "VERDE", "AMARILLO", "NEGRO",
+                         "BLANCO", "MORADO", "ROSA", "NARANJA", "GRIS",
+                         "CELESTE", "DORADO", "PLATEADO", "TURQUESA", "MARRON"],
+                transporte: ["AUTOMOVIL", "BICICLETA", "AVION", "TREN", "BARCO",
+                            "MOTO", "CAMION", "TAXI", "BUS", "SUBMARINO",
+                            "HELICOPTERO", "TRICICLO", "PATINETA", "AMBULANCIA", "TRACTOR"],
+                tecnologia: ["COMPUTADORA", "TELEFONO", "INTERNET", "TABLETA", "CAMARA",
+                           "ROBOT", "DRON", "IMPRESORA", "SATELLITE", "MICROCHIP",
+                           "REDES", "ALGORITMO", "BATERIA", "SENSOR", "WIFI"],
+                escuela: ["LIBRO", "LAPIZ", "CUADERNO", "MAESTRO", "ESTUDIANTE",
+                         "SALON", "UNIVERSIDAD", "EXAMEN", "TAREA", "BOLIGRAFO",
+                         "GOMA", "REGLA", "MOCHILA", "PIZARRA", "CALCULADORA"],
+                familia: ["PADRE", "MADRE", "HERMANO", "HERMANA", "ABUELO",
+                        "ABUELA", "TIO", "TIA", "PRIMO", "PRIMA",
+                        "HIJO", "HIJA", "SOBRINO", "SOBRINA", "NIETO"],
+                cocina: ["COCINA", "HORNO", "REFRIGERADOR", "SARTEN", "OLLA",
+                        "CUCHILLO", "TENEDOR", "CUCHARA", "PLATO", "VASO",
+                        "LICUADORA", "MICROONDAS", "CAFETERA", "BATIDORA", "TOSTADORA"],
+                cuerpo: ["CABEZA", "BRAZO", "PIERNA", "MANO", "PIE",
+                        "OJOS", "NARIZ", "BOCA", "OREJA", "CABELLO",
+                        "CORAZON", "PULMON", "ESTOMAGO", "CEREBRO", "RODILLA"],
+                naturaleza: ["ARBOL", "FLOR", "RIO", "MONTAÑA", "LAGO",
+                            "BOSQUE", "PLAYA", "DESIERTO", "VOLCAN", "CASCADA",
+                            "OCEANO", "ISLA", "VALLE", "JUNGLA", "GLACIAR"],
+                tiempo: ["TIEMPO", "CLIMA", "LLUVIA", "SOL", "VIENTO",
+                        "NIEVE", "TORMENTA", "NUBE", "ARCOIRIS", "HURACAN",
+                        "SEQUIA", "CALOR", "FRIO", "NIEBLA", "GRANIZO"],
+                musica: ["MUSICA", "CANTO", "PIANO", "GUITARRA", "TAMBOR",
+                        "FLAUTA", "VIOLIN", "BAJO", "SAXOFON", "TROMPETA",
+                        "ARMONICA", "BATERIA", "MARACAS", "SINTETIZADOR", "MICROFONO"],
+                ropa: ["CAMISA", "PANTALON", "VESTIDO", "CHAQUETA", "ZAPATO",
+                      "SOMBRERO", "BUFANDA", "GUANTES", "ABRIGO", "FALDA",
+                      "SHORT", "CAMISETA", "SUETER", "CORBAT", "MEDIAS"],
+                emociones: ["AMOR", "ALEGRIA", "TRISTEZA", "ENOJO", "MIEDO",
+                          "SORPRESA", "FELICIDAD", "PAZ", "ESPERANZA", "CELOS",
+                          "VERGUENZA", "ORGULLO", "CULPA", "SOLEDAD", "GRATITUD"],
+                ciudades: ["MADRID", "BARCELONA", "CIUDADDEMEXICO", "BUENOSAIRES", "LIMA",
+                          "BOGOTA", "SANTIAGO", "CARACAS", "QUITO", "RIODEJANEIRO",
+                          "LONDRES", "PARIS", "ROMA", "TOKIO", "NUEVAYORK"],
+                edificios: ["CASA", "EDIFICIO", "HOSPITAL", "ESCUELA", "HOTEL",
+                          "RESTAURANTE", "BANCO", "TIENDA", "AEROPUERTO", "ESTACION",
+                          "TEATRO", "CINE", "MUSEO", "IGLESIA", "ESTADIO"]
+            };
+            
+            // Configuración del juego
+            const config = {
+                gridSizes: {
+                    facil: 12,
+                    medio: 15,
+                    dificil: 18
+                },
+                wordCounts: {
+                    facil: 10,
+                    medio: 15,
+                    dificil: 20
+                },
+                wordDirections: [
+                    { dr: 1, dc: 0 },   // Vertical abajo
+                    { dr: 0, dc: 1 },   // Horizontal derecha
+                    { dr: 1, dc: 1 },   // Diagonal abajo derecha
+                    { dr: 1, dc: -1 },  // Diagonal abajo izquierda
+                    { dr: -1, dc: 0 },  // Vertical arriba
+                    { dr: 0, dc: -1 },  // Horizontal izquierda
+                    { dr: -1, dc: -1 }, // Diagonal arriba izquierda
+                    { dr: -1, dc: 1 }   // Diagonal arriba derecha
+                ],
+                pointsPerLetter: 2,
+                hintPenalty: 10,
+                bonusPoints: 100
+            };
+            
+            // Estado del juego
+            const state = {
+                grid: [],
+                selectedCells: [],
+                foundWords: [],
+                score: 0,
+                firstSelected: null,
+                isSelecting: false,
+                difficulty: 'medio',
+                wordCategories: [],
+                currentWords: []
+            };
+            
+            // Elementos del DOM
+            const elements = {
+                grid: document.getElementById('grid'),
+                wordList: document.getElementById('word-list'),
+                score: document.getElementById('score'),
+                foundCount: document.getElementById('found-count'),
+                totalWords: document.getElementById('total-words'),
+                message: document.getElementById('message'),
+                difficultyDisplay: document.getElementById('difficulty'),
+                newGameBtn: document.getElementById('new-game'),
+                hintBtn: document.getElementById('hint')
+            };
+            
+            // Inicializar el juego
+            function initGame() {
+                loadScore();
+                setupEventListeners();
+                startNewGame();
+            }
+            
+            // Configurar event listeners
+            function setupEventListeners() {
+                // Event listeners para dispositivos táctiles y mouse
+                elements.grid.addEventListener('mousedown', handleMouseDown);
+                elements.grid.addEventListener('mouseover', handleMouseOver);
+                elements.grid.addEventListener('mouseup', handleMouseUp);
+                
+                elements.grid.addEventListener('touchstart', handleTouchStart, { passive: false });
+                elements.grid.addEventListener('touchmove', handleTouchMove, { passive: false });
+                elements.grid.addEventListener('touchend', handleTouchEnd);
+                
+                // Botones de control
+                elements.newGameBtn.addEventListener('click', startNewGame);
+                elements.hintBtn.addEventListener('click', giveHint);
+                
+                // Selector de dificultad
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === '1') setDifficulty('facil');
+                    if (e.key === '2') setDifficulty('medio');
+                    if (e.key === '3') setDifficulty('dificil');
+                });
+            }
+            
+            // Cargar puntuación desde localStorage
+            function loadScore() {
+                const savedScore = localStorage.getItem('wordSearchScore');
+                if (savedScore) {
+                    state.score = parseInt(savedScore);
+                    updateScoreDisplay();
+                }
+            }
+            
+            // Guardar puntuación en localStorage
+            function saveScore() {
+                localStorage.setItem('wordSearchScore', state.score.toString());
+            }
+            
+            // Actualizar la visualización de la puntuación
+            function updateScoreDisplay() {
+                elements.score.textContent = state.score;
+            }
+            
+            // Establecer dificultad
+            function setDifficulty(difficulty) {
+                state.difficulty = difficulty;
+                elements.difficultyDisplay.textContent = 
+                    difficulty === 'facil' ? 'Fácil' : 
+                    difficulty === 'medio' ? 'Media' : 'Difícil';
+                
+                startNewGame();
+            }
+            
+            // Iniciar un nuevo juego
+            function startNewGame() {
+                // Seleccionar categorías aleatorias
+                selectRandomCategories();
+                
+                // Seleccionar palabras aleatorias
+                selectRandomWords();
+                
+                // Reiniciar estado del juego
+                state.foundWords = [];
+                state.score = 0;
+                updateScoreDisplay();
+                
+                // Crear grid
+                createEmptyGrid();
+                
+                // Intentar colocar palabras (hasta 10 intentos)
+                let placedSuccessfully = false;
+                let attempts = 0;
+                
+                while (!placedSuccessfully && attempts < 10) {
+                    attempts++;
+                    createEmptyGrid();
+                    placedSuccessfully = placeWords();
+                }
+                
+                if (!placedSuccessfully) {
+                    showMessage("No se pudo generar la sopa de letras. Intentando de nuevo...");
+                    setTimeout(startNewGame, 500);
+                    return;
+                }
+                
+                // Rellenar espacios vacíos
+                fillEmptyCells();
+                
+                // Renderizar la interfaz
+                renderGrid();
+                renderWordList();
+                
+                // Actualizar contadores
+                elements.totalWords.textContent = state.currentWords.length;
+                updateFoundCount();
+                
+                showMessage("¡Nuevo juego comenzado! Encuentra las palabras.");
+            }
+            
+            // Seleccionar categorías aleatorias
+            function selectRandomCategories() {
+                const allCategories = Object.keys(spanishWords);
+                const selectedCategories = [];
+                
+                // Seleccionar 3 categorías aleatorias
+                while (selectedCategories.length < 3 && selectedCategories.length < allCategories.length) {
+                    const randomCategory = allCategories[Math.floor(Math.random() * allCategories.length)];
+                    if (!selectedCategories.includes(randomCategory)) {
+                        selectedCategories.push(randomCategory);
+                    }
+                }
+                
+                state.wordCategories = selectedCategories;
+            }
+            
+            // Seleccionar palabras aleatorias
+            function selectRandomWords() {
+                const wordCount = config.wordCounts[state.difficulty];
+                const selectedWords = [];
+                
+                // Seleccionar palabras de las categorías elegidas
+                while (selectedWords.length < wordCount) {
+                    const randomCategory = state.wordCategories[
+                        Math.floor(Math.random() * state.wordCategories.length)
+                    ];
+                    
+                    const wordsInCategory = spanishWords[randomCategory];
+                    const randomWord = wordsInCategory[
+                        Math.floor(Math.random() * wordsInCategory.length)
+                    ];
+                    
+                    if (!selectedWords.includes(randomWord)) {
+                        selectedWords.push(randomWord);
+                    }
+                }
+                
+                state.currentWords = selectedWords;
+            }
+            
+            // Crear grid vacío
+            function createEmptyGrid() {
+                const size = config.gridSizes[state.difficulty];
+                state.grid = Array(size).fill().map(() => 
+                    Array(size).fill({ letter: '', isWord: false })
+                );
+            }
+            
+            // Colocar palabras en el grid
+            function placeWords() {
+                const size = config.gridSizes[state.difficulty];
+                const shuffledWords = [...state.currentWords].sort(() => Math.random() - 0.5);
+                
+                for (const word of shuffledWords) {
+                    let placed = false;
+                    let attempts = 0;
+                    const maxAttempts = 50;
+                    
+                    while (!placed && attempts < maxAttempts) {
+                        attempts++;
+                        
+                        // Elegir dirección aleatoria
+                        const direction = config.wordDirections[
+                            Math.floor(Math.random() * config.wordDirections.length)
+                        ];
+                        
+                        // Calcular posición máxima inicial
+                        const maxRow = size - (word.length - 1) * Math.max(0, direction.dr);
+                        const maxCol = size - (word.length - 1) * Math.max(0, direction.dc);
+                        const minRow = (word.length - 1) * Math.max(0, -direction.dr);
+                        const minCol = (word.length - 1) * Math.max(0, -direction.dc);
+                        
+                        // Si no cabe en esta dirección, continuar
+                        if (minRow >= maxRow || minCol >= maxCol) continue;
+                        
+                        // Elegir posición inicial aleatoria
+                        const startRow = Math.floor(Math.random() * (maxRow - minRow)) + minRow;
+                        const startCol = Math.floor(Math.random() * (maxCol - minCol)) + minCol;
+                        
+                        // Verificar si la palabra cabe sin solapamientos incorrectos
+                        let canPlace = true;
+                        for (let i = 0; i < word.length; i++) {
+                            const row = startRow + i * direction.dr;
+                            const col = startCol + i * direction.dc;
+                            const cell = state.grid[row][col];
+                            
+                            if (cell.isWord && cell.letter !== word[i]) {
+                                canPlace = false;
+                                break;
+                            }
+                        }
+                        
+                        // Colocar la palabra si es posible
+                        if (canPlace) {
+                            for (let i = 0; i < word.length; i++) {
+                                const row = startRow + i * direction.dr;
+                                const col = startCol + i * direction.dc;
+                                state.grid[row][col] = {
+                                    letter: word[i],
+                                    isWord: true,
+                                    word: word,
+                                    wordIndex: i,
+                                    startRow,
+                                    startCol,
+                                    direction
+                                };
+                            }
+                            placed = true;
+                        }
+                    }
+                    
+                    if (!placed) {
+                        return false; // No se pudo colocar esta palabra
+                    }
+                }
+                
+                return true; // Todas las palabras colocadas
+            }
+            
+            // Rellenar celdas vacías con letras aleatorias
+            function fillEmptyCells() {
+                const size = config.gridSizes[state.difficulty];
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                const letterFrequency = [
+                    'A', 'A', 'A', 'A', 'A', 'A', 'E', 'E', 'E', 'E', 'E', 'E',
+                    'I', 'I', 'I', 'I', 'O', 'O', 'O', 'O', 'O', 'O', 'U', 'U', 'U',
+                    'B', 'C', 'C', 'D', 'D', 'F', 'G', 'H', 'J', 'L', 'L', 'L', 'M',
+                    'M', 'N', 'N', 'N', 'N', 'P', 'P', 'Q', 'R', 'R', 'R', 'R', 'S',
+                    'S', 'S', 'S', 'T', 'T', 'T', 'T', 'V', 'X', 'Y', 'Z'
+                ];
+                
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (!state.grid[row][col].letter) {
+                            const randomLetter = letterFrequency[
+                                Math.floor(Math.random() * letterFrequency.length)
+                            ];
+                            state.grid[row][col] = {
+                                letter: randomLetter,
+                                isWord: false
+                            };
+                        }
+                    }
+                }
+            }
+            
+            // Renderizar el grid en el DOM
+            function renderGrid() {
+                elements.grid.innerHTML = '';
+                const size = config.gridSizes[state.difficulty];
+                elements.grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.textContent = state.grid[row][col].letter;
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        if (state.grid[row][col].isWord && state.foundWords.includes(state.grid[row][col].word)) {
+                            cell.classList.add('found');
+                        }
+                        
+                        elements.grid.appendChild(cell);
+                    }
+                }
+            }
+            
+            // Renderizar la lista de palabras
+            function renderWordList() {
+                elements.wordList.innerHTML = '';
+                
+                const sortedWords = [...state.currentWords].sort((a, b) => a.localeCompare(b));
+                
+                for (const word of sortedWords) {
+                    const li = document.createElement('li');
+                    li.className = 'word-item';
+                    li.textContent = word;
+                    
+                    if (state.foundWords.includes(word)) {
+                        li.classList.add('found');
+                    }
+                    
+                    elements.wordList.appendChild(li);
+                }
+            }
+            
+            // Actualizar contador de palabras encontradas
+            function updateFoundCount() {
+                elements.foundCount.textContent = state.foundWords.length;
+            }
+            
+            // Manejar inicio de selección
+            function handleMouseDown(e) {
+                if (e.target.classList.contains('cell')) {
+                    e.preventDefault();
+                    state.isSelecting = true;
+                    const row = parseInt(e.target.dataset.row);
+                    const col = parseInt(e.target.dataset.col);
+                    state.firstSelected = { row, col };
+                    clearSelection();
+                    addToSelection(row, col);
+                }
+            }
+            
+            function handleTouchStart(e) {
+                if (e.target.classList.contains('cell')) {
+                    e.preventDefault();
+                    state.isSelecting = true;
+                    const row = parseInt(e.target.dataset.row);
+                    const col = parseInt(e.target.dataset.col);
+                    state.firstSelected = { row, col };
+                    clearSelection();
+                    addToSelection(row, col);
+                }
+            }
+            
+            // Manejar movimiento durante selección
+            function handleMouseOver(e) {
+                if (state.isSelecting && e.target.classList.contains('cell')) {
+                    e.preventDefault();
+                    const row = parseInt(e.target.dataset.row);
+                    const col = parseInt(e.target.dataset.col);
+                    selectBetween(state.firstSelected.row, state.firstSelected.col, row, col);
+                }
+            }
+            
+            function handleTouchMove(e) {
+                if (state.isSelecting) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (element && element.classList.contains('cell')) {
+                        const row = parseInt(element.dataset.row);
+                        const col = parseInt(element.dataset.col);
+                        selectBetween(state.firstSelected.row, state.firstSelected.col, row, col);
+                    }
+                }
+            }
+            
+            // Manejar fin de selección
+            function handleMouseUp() {
+                if (state.isSelecting) {
+                    state.isSelecting = false;
+                    checkSelection();
+                }
+            }
+            
+            function handleTouchEnd() {
+                if (state.isSelecting) {
+                    state.isSelecting = false;
+                    checkSelection();
+                }
+            }
+            
+            // Limpiar selección
+            function clearSelection() {
+                state.selectedCells = [];
+                document.querySelectorAll('.cell.selected').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+            }
+            
+            // Añadir celda a la selección
+            function addToSelection(row, col) {
+                if (!isSelected(row, col)) {
+                    state.selectedCells.push({ row, col });
+                    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                    if (cell) cell.classList.add('selected');
+                }
+            }
+            
+            // Verificar si una celda está seleccionada
+            function isSelected(row, col) {
+                return state.selectedCells.some(cell => cell.row === row && cell.col === col);
+            }
+            
+            // Seleccionar todas las celdas entre dos puntos
+            function selectBetween(row1, col1, row2, col2) {
+                clearSelection();
+                
+                let dr = Math.sign(row2 - row1);
+                let dc = Math.sign(col2 - col1);
+                
+                // Solo permitir selección en línea recta (horizontal, vertical o diagonal)
+                if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) {
+                    // Si no es línea recta, usar la dirección predominante
+                    if (Math.abs(row2 - row1) > Math.abs(col2 - col1)) {
+                        dc = 0;
+                    } else {
+                        dr = 0;
+                    }
+                }
+                
+                const distance = Math.max(Math.abs(row2 - row1), Math.abs(col2 - col1));
+                
+                for (let i = 0; i <= distance; i++) {
+                    const row = row1 + i * dr;
+                    const col = col1 + i * dc;
+                    
+                    if (row >= 0 && row < config.gridSizes[state.difficulty] && 
+                        col >= 0 && col < config.gridSizes[state.difficulty]) {
+                        addToSelection(row, col);
+                    }
+                }
+            }
+            
+            // Verificar si la selección es una palabra válida
+            function checkSelection() {
+                if (state.selectedCells.length < 2) {
+                    return;
+                }
+                
+                // Obtener la palabra formada por la selección
+                const selectedWord = state.selectedCells.map(cell => 
+                    state.grid[cell.row][cell.col].letter
+                ).join('');
+                
+                // Verificar si la palabra está en la lista (en cualquier dirección)
+                const upperSelectedWord = selectedWord.toUpperCase();
+                const reversedWord = selectedWord.split('').reverse().join('').toUpperCase();
+                
+                let foundWord = null;
+                
+                for (const word of state.currentWords) {
+                    if (upperSelectedWord === word || reversedWord === word) {
+                        foundWord = word;
+                        break;
+                    }
+                }
+                
+                if (foundWord && !state.foundWords.includes(foundWord)) {
+                    // Palabra encontrada
+                    state.foundWords.push(foundWord);
+                    
+                    // Marcar celdas como encontradas
+                    state.selectedCells.forEach(cell => {
+                        state.grid[cell.row][cell.col].found = true;
+                    });
+                    
+                    // Calcular puntos (2 puntos por letra)
+                    const pointsEarned = config.pointsPerLetter * foundWord.length;
+                    state.score += pointsEarned;
+                    
+                    // Bonificación por encontrar todas las palabras
+                    if (state.foundWords.length === state.currentWords.length) {
+                        state.score += config.bonusPoints;
+                        showMessage(`¡Felicidades! Has encontrado todas las palabras. Bonus de ${config.bonusPoints} puntos.`);
+                    } else {
+                        showMessage(`¡Encontraste "${foundWord}"! +${pointsEarned} puntos`);
+                    }
+                    
+                    // Actualizar UI y guardar puntuación
+                    updateFoundCount();
+                    renderGrid();
+                    renderWordList();
+                    updateScoreDisplay();
+                    saveScore();
+                } else {
+                    // Selección incorrecta
+                    showMessage('Selección incorrecta. Intenta de nuevo.');
+                }
+                
+                clearSelection();
+            }
+            
+            // Dar una pista al jugador
+            function giveHint() {
+                if (state.score < config.hintPenalty) {
+                    showMessage(`Necesitas al menos ${config.hintPenalty} puntos para una pista.`);
+                    return;
+                }
+                
+                // Encontrar palabras no encontradas
+                const remainingWords = state.currentWords.filter(word => 
+                    !state.foundWords.includes(word)
+                );
+                
+                if (remainingWords.length === 0) {
+                    showMessage("¡Ya encontraste todas las palabras!");
+                    return;
+                }
+                
+                // Seleccionar una palabra aleatoria no encontrada
+                const hintWord = remainingWords[
+                    Math.floor(Math.random() * remainingWords.length)
+                ];
+                
+                // Encontrar la posición de la palabra en el grid
+                let wordCells = [];
+                const size = config.gridSizes[state.difficulty];
+                
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (state.grid[row][col].word === hintWord) {
+                            wordCells.push({ row, col });
+                        }
+                    }
+                }
+                
+                // Resaltar la palabra por 2 segundos
+                wordCells.forEach(cell => {
+                    const cellElement = document.querySelector(
+                        `.cell[data-row="${cell.row}"][data-col="${cell.col}"]`
+                    );
+                    if (cellElement) {
+                        cellElement.classList.add('selected');
+                    }
+                });
+                
+                // Descontar puntos
+                state.score -= config.hintPenalty;
+                updateScoreDisplay();
+                saveScore();
+                
+                showMessage(`Pista: "${hintWord}" (-${config.hintPenalty} puntos)`);
+                
+                // Quitar resaltado después de 2 segundos
+                setTimeout(() => {
+                    wordCells.forEach(cell => {
+                        const cellElement = document.querySelector(
+                            `.cell[data-row="${cell.row}"][data-col="${cell.col}"]`
+                        );
+                        if (cellElement) {
+                            cellElement.classList.remove('selected');
+                        }
+                    });
+                }, 2000);
+            }
+            
+            // Mostrar mensaje temporal
+            function showMessage(msg) {
+                elements.message.textContent = msg;
+                setTimeout(() => {
+                    if (elements.message.textContent === msg) {
+                        elements.message.textContent = '';
+                    }
+                }, 3000);
+            }
+            
+            // Iniciar el juego
+            initGame();
+        });
+    </script>
+</body>
+</html>
